@@ -6,7 +6,10 @@ import rungekutta
 from rungekutta import ODESolver
 import matplotlib.animation as animation
 
-#### TEST IT OUT
+"""Solve the ODE governing the lead climb fall and plot"""
+
+#### PROGRESS NOTES ####
+# June 2 2020 - the forces are far too large. changing K and B create more realistic results. Rope model needs investigation
 
 Mc = 70 # mass of climber
 g = 9.81 # gravity
@@ -16,9 +19,11 @@ Sdrag_y = 0.14
 Lslack = 0.3 # Slack at belay
 
 # Rope params
-KR1 = 13900 # N . Need to divide by R before using. Where R = initial rope length from pro to climber including slack before stretch
-B = 6768 # N*s
+# KR1 = 13900 # N . Need to divide by R before using. Where R = initial rope length from pro to climber including slack before stretch
+# B = 6768 # N*s
 
+# KR1 = 1390
+# B = 676
 
 parameters = [Mc, g, ro, Sdrag_x, Sdrag_y, KR1, B, Lslack]
 climber_init_pos = [0, 2]
@@ -26,7 +31,7 @@ pro_pos = [0, 1]
 belay_pos = [0, 0]
 init_vel = [0, 0]
 simulation_duration = 3.0
-numsteps = 5000
+numsteps = 1000
 
 # Fall factor = fall distance (in y) / length of rope out
 fall_factor = ((climber_init_pos[1] - pro_pos[1]) * 2 + Lslack) / (LA.norm(np.array(pro_pos)) + LA.norm(np.array(climber_init_pos) - np.array(pro_pos)) + Lslack)
@@ -76,46 +81,46 @@ print("Fall factor: {0}".format(fall_factor))
 # Save data
 df.to_csv('runge-kutta-soln.csv')
 
-#### Plot
+# ### Plot
 # df.plot(x="Time", y=["Frope_total", "Fdrag_total"])
 # df.plot(x="Time", y=["ux", "uy", "vx", "vy"])
 # plt.show()
 
 
-#### Animate
-# x1 = df['ux']
-# y1 = df['uy']
-# dt = simulation_duration / numsteps
+### Animate
+x1 = df['ux']
+y1 = df['uy']
+dt = simulation_duration / numsteps
 
-# fig = plt.figure()
-# ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 5), ylim=(-2, 5))
-# ax.grid()
+fig = plt.figure()
+ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 5), ylim=(-2, 5))
+ax.grid()
 
-# line, = ax.plot([], [], 'o-', lw=2)
-# time_template = 'time = %.1fs'
-# time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-# Frope_template = 'Rope force = %.1fs'
-# Frope_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-
-
-# def init():
-#     line.set_data([], [])
-#     time_text.set_text('')
-
-#     return line, time_text
+line, = ax.plot([], [], 'o-', lw=2)
+time_template = 'time = %.1fs'
+time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+Frope_template = 'Rope force = %.1fs'
+Frope_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
 
-# def animate(i):
-#   # anchor, current position
-#     thisx = [pro_pos[0], x1[i]]
-#     thisy = [pro_pos[1], y1[i]]
+def init():
+    line.set_data([], [])
+    time_text.set_text('')
 
-#     line.set_data(thisx, thisy)
-#     time_text.set_text(time_template % (i*dt))
-#     return line, time_text
+    return line, time_text
 
-# ani = animation.FuncAnimation(fig, animate, np.arange(1, len(x1)),
-#                               interval=25, blit=True, init_func=init)
 
-# # ani.save('double_pendulum.mp4', fps=15)
-# plt.show()
+def animate(i):
+  # anchor, current position
+    thisx = [pro_pos[0], x1[i]]
+    thisy = [pro_pos[1], y1[i]]
+
+    line.set_data(thisx, thisy)
+    time_text.set_text(time_template % (i*dt))
+    return line, time_text
+
+ani = animation.FuncAnimation(fig, animate, np.arange(1, len(x1)),
+                              interval=25, blit=True, init_func=init)
+
+# ani.save('double_pendulum.mp4', fps=15)
+plt.show()
