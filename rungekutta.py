@@ -55,7 +55,8 @@ class ODESolver(object):
 		Fropex = self.calc_Fropex(ux, uy, vx)
 		Fdragx = self.calc_Fdragx(vx)
 
-		dvxdt = Fropex + Fdragx
+		# ax = (- k S sin(theta) - b Vx - 1/2 p Sx Vx^2) / m
+		dvxdt = (Fropex + Fdragx) / self.mc
 		return dvxdt
 
 	def duydt(self, ux, vx, uy, vy):
@@ -67,8 +68,8 @@ class ODESolver(object):
 		Fropey = self.calc_Fropey(ux, uy, vy)
 		Fdragy = self.calc_Fdragy(vy)
 
-		# ay = - g - k/m S cos(theta) - b/m Vy - 1/2 p Sy Vy^2
-		dvydt = - self.g + Fropey + Fdragy
+		# ay = - g - (k S cos(theta) - b Vy - 1/2 p Sy Vy^2) / m
+		dvydt = - self.g + (Fropey + Fdragy) / self.mc
 		return dvydt
 
 
@@ -109,14 +110,14 @@ class ODESolver(object):
 		sin_theta = self.sin_theta(ux, uy)
 
 		if s > 0:
-			spring = - self.kr1 / self.mc * s * sin_theta
+			spring = - self.kr1 * s * sin_theta
 
 			# Damper is only active if velocity is in direction of rope stretch. Can't push a rope
 			if vx > 0 and ux > self.Tx: #if velocity is up and the climber is above the pro and the rope is stretched
-				damper = - self.b / self.mc * vx # then rope pulls down
+				damper = - self.b * vx # then rope pulls down
 
 			elif vx < 0 and ux < self.Tx: # if velocity is down and climber is below the pro (typical case)
-				damper = - self.b / self.mc * vx # Rope pull us. vx is negative in this case so the value is positive
+				damper = - self.b * vx # Rope pull us. vx is negative in this case so the value is positive
 
 			else:
 				# If the climber is above the pro and falling down, or below the pro and moving up, damping is 0
@@ -134,15 +135,15 @@ class ODESolver(object):
 		cos_theta = self.cos_theta(ux, uy)
 
 		if s > 0: # Spring and damper only active if rope is stretched
-			spring = - self.kr1 / self.mc * s * cos_theta
-			# damper = - self.b / self.mc * vy
+			spring = - self.kr1 * s * cos_theta
+			# damper = - self.b * vy
 
 			# Damper is only active if velocity is in direction of rope stretch. Can't push a rope
 			if vy > 0 and uy > self.Ty: #if velocity is up and the climber is above the pro, rope is stretched
-				damper = - self.b / self.mc * vy # then rope pulls down
+				damper = - self.b * vy # then rope pulls down
 
 			elif vy < 0 and uy < self.Ty: # if velocity is down and climber is below the pro (typical case)
-				damper = - self.b / self.mc * vy
+				damper = - self.b * vy
 
 			else:
 				damper = 0
