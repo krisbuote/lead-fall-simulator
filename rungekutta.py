@@ -5,7 +5,7 @@ import pandas as pd
 
 class ODESolver(object):
 
-	def __init__(self, init_position, pro_position, initial_velocity, params, duration, numsteps):
+	def __init__(self, init_position, pro_position, belay_position, initial_velocity, params, duration, numsteps):
 		# Initial climber position
 		self.ux = init_position[0]
 		self.uy = init_position[1]
@@ -22,8 +22,10 @@ class ODESolver(object):
 
 		# Rope parameters. Determine rope properties based on L2 + Lslack
 		self.R = np.sqrt((self.ux - self.Tx)**2 + (self.uy - self.Ty)**2) + self.Lslack # initial rope length from pro to climber including slack before stretch
-		self.kr1 = self.KR1 / self.R # Rope values from Sporri determined by amount of rope out from pro
-		self.b = self.B / self.R
+		self.belay_to_pro_dist = np.sqrt((self.Tx - belay_position[0])**2 + (self.Ty - belay_position[1])**2)
+		
+		self.kr1 = self.KR1 / (self.R + self.belay_to_pro_dist) # Rope values from Sporri determined by amount of rope out from pro
+		self.b = self.B / (self.R + self.belay_to_pro_dist)
 
 		self.t = 0
 		self.duration = duration
